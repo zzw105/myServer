@@ -385,8 +385,8 @@ app.post('/upFile', (req: Request, res) => {
     keepExtensions: true, //包含源文件的扩展名
     multiples: true //多个文件的倍数
   })
-  form.parse(req, function (_err, _fields, files) {
-    console.log(files)
+  form.parse(req, function (_err, fields, files) {
+    const size = +fields.size
 
     try {
       const inputFile = files.file
@@ -397,7 +397,7 @@ app.post('/upFile', (req: Request, res) => {
         // 输出保存位置
         const outPath = path.join(__dirname, saveDir) + '/' + inputFile.originalFilename
 
-        images(newPath).size(60).save(outPath)
+        images(newPath).size(size).save(outPath)
         // 返回文件名即可
         res.json({ code: 200, data: inputFile.originalFilename })
         //   })

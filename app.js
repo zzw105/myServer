@@ -352,11 +352,6 @@ app.post('/upload', (req, res) => {
     });
 });
 app.post('/upFile', (req, res) => {
-    /* 生成multiparty对象，并配置上传目标路径 */
-    // const form = new multiparty.Form()
-    // // 设置编码
-    // form.encoding = 'utf-8'
-    // // 设置文件存储路径，以当前编辑的文件为相对路径
     const uploadDir = './files';
     const saveDir = './minFiles';
     const form = formidable({
@@ -364,20 +359,17 @@ app.post('/upFile', (req, res) => {
         keepExtensions: true,
         multiples: true //多个文件的倍数
     });
-    // 设置文件大小限制
-    form.parse(req, function (_err, _fields, files) {
-        console.log(files);
+    form.parse(req, function (_err, fields, files) {
+        const size = +fields.size;
         try {
             const inputFile = files.file;
             if (!Array.isArray(inputFile)) {
-                const newPath = inputFile.filepath; //oldPath  不得作更改，使用默认上传路径就好
-                const outPath = path.join(__dirname, saveDir) + '/' + inputFile.originalFilename; //oldPath  不得作更改，使用默认上传路径就好
-                images(newPath).size(60).save(outPath);
-                // 同步重命名文件名 fs.renameSync(oldPath, newPath)
-                //   fs.renameSync(inputFile.path, newPath)
-                //   const image = fs.readFileSync(newPath).toString('base64')
-                //   client.generalBasic(image).then(function (result) {
-                //     console.log(result)
+                // 文件保存位置
+                const newPath = inputFile.filepath;
+                // 输出保存位置
+                const outPath = path.join(__dirname, saveDir) + '/' + inputFile.originalFilename;
+                images(newPath).size(size).save(outPath);
+                // 返回文件名即可
                 res.json({ code: 200, data: inputFile.originalFilename });
                 //   })
             }
