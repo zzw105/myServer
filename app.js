@@ -10,6 +10,7 @@ const fs = require("fs");
 const images = require("images");
 const formidable = require("formidable");
 const path = require("path");
+const gifResize = require("gif-resizer");
 const AipOcrClient = require('baidu-aip-sdk').ocr;
 const SECRET_KEY = 'kite1874';
 // 设置APPID/AK/SK
@@ -357,7 +358,10 @@ app.post('/upFile', (req, res) => {
     const form = formidable({
         uploadDir: path.join(__dirname, uploadDir),
         keepExtensions: true,
-        multiples: true //多个文件的倍数
+        multiples: true,
+        filename: (name, ext) => {
+            return name + new Date().getTime() + ext;
+        }
     });
     form.parse(req, function (_err, fields, files) {
         const size = +fields.size;
@@ -366,12 +370,21 @@ app.post('/upFile', (req, res) => {
             if (!Array.isArray(inputFile)) {
                 // 文件保存位置
                 const newPath = inputFile.filepath;
+                const originalFilename = new Date().getTime() + path.extname(inputFile.originalFilename);
                 // 输出保存位置
-                const outPath = path.join(__dirname, saveDir) + '/' + inputFile.originalFilename;
-                images(newPath).size(size).save(outPath);
-                // 返回文件名即可
-                res.json({ code: 200, data: inputFile.originalFilename });
-                //   })
+                const outPath = path.join(__dirname, saveDir) + '/' + originalFilename;
+                if (inputFile.mimetype.includes("gif")) {
+                    gifResize(newPath, { width: size }).then(file => {
+                        fs.writeFileSync(outPath, file);
+                        // 返回文件名即可
+                        res.json({ code: 200, data: originalFilename });
+                    });
+                }
+                else {
+                    images(newPath).size(size).save(outPath);
+                    // 返回文件名即可
+                    res.json({ code: 200, data: originalFilename });
+                }
             }
         }
         catch (err) {

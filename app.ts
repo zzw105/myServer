@@ -9,6 +9,7 @@ import fs = require('fs')
 import images = require('images')
 import formidable = require('formidable')
 import path = require('path')
+import gifResize = require("gif-resizer");
 
 const AipOcrClient = require('baidu-aip-sdk').ocr
 const SECRET_KEY = 'kite1874'
@@ -383,9 +384,12 @@ app.post('/upFile', (req: Request, res) => {
   const form = formidable({
     uploadDir: path.join(__dirname, uploadDir), // 上传文件放置的目录
     keepExtensions: true, //包含源文件的扩展名
-    multiples: true //多个文件的倍数
+    multiples: true, //多个文件的倍数
+    filename:(name,ext)=>{
+      return name+new Date().getTime()+ext
+    }
   })
-  form.parse(req, function (_err, fields, files) {
+  form.parse(req, function  (_err, fields, files) {
     const size = +fields.size
 
     try {
@@ -394,13 +398,22 @@ app.post('/upFile', (req: Request, res) => {
       if (!Array.isArray(inputFile)) {
         // 文件保存位置
         const newPath = inputFile.filepath
-        // 输出保存位置
-        const outPath = path.join(__dirname, saveDir) + '/' + inputFile.originalFilename
 
-        images(newPath).size(size).save(outPath)
-        // 返回文件名即可
-        res.json({ code: 200, data: inputFile.originalFilename })
-        //   })
+        const originalFilename = new Date().getTime()+	path.extname(inputFile.originalFilename)
+        // 输出保存位置
+        const outPath = path.join(__dirname, saveDir) + '/' + originalFilename
+        if (inputFile.mimetype.includes("gif")) {
+          gifResize(newPath, { width: size }).then(file => {
+            fs.writeFileSync(outPath, file)
+            // 返回文件名即可
+            res.json({ code: 200, data: originalFilename })
+        })
+        }else{
+          images(newPath).size(size).save(outPath)
+          // 返回文件名即可
+          res.json({ code: 200, data: originalFilename })
+        }
+      
       }
     } catch (err) {
       console.log(err)

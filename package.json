@@ -17,6 +17,7 @@
     "express": "^4.18.1",
     "express-jwt": "^7.7.5",
     "formidable": "^2.0.1",
+    "gif-resizer": "^4.0.1",
     "images": "^3.2.4",
     "jsonwebtoken": "^8.5.1",
     "log4js": "^6.6.1",
